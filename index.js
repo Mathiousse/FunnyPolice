@@ -46,7 +46,7 @@ client.once('ready', async () => {
     const guildId = '1189230282398777374'; // only for the main discord
     const guild = client.guilds.cache.get(guildId);
     let command = await guild?.commands.create(data);
-    console.log(`Registered command: ${command?.name}`);
+    // console.log(`Registered command: ${command?.name}`);
 
     userSocialStats.sync();
     // userSocialStats.sync({ force: true });
