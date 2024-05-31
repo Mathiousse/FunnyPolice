@@ -12,6 +12,8 @@ export const reactionList = {
     "🏳️‍⚧️": 2
 }
 
+const cutoff = "1717178914308"
+
 export const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -47,7 +49,6 @@ client.once('ready', async () => {
     const guild = client.guilds.cache.get(guildId);
     let command = await guild?.commands.create(data);
     // console.log(`Registered command: ${command?.name}`);
-
     userSocialStats.sync();
     // userSocialStats.sync({ force: true });
     messagesScored.sync()
@@ -58,6 +59,8 @@ client.once('ready', async () => {
 });
 
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
+    if (reaction.message.createdAt < cutoff) return console.log('Message too old')
+    console.log(reaction, "reaction")
     if (reaction.partial) {
         try {
             await reaction.fetch();
@@ -112,6 +115,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 });
 
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
+    if (reaction.message.createdAt < cutoff) return console.log('Message too old')
     if (reaction.partial) {
         try {
             await reaction.fetch();
