@@ -12,7 +12,7 @@ export const reactionList = {
     "plus2": 2
 }
 
-const cutoff = "1717268721311"
+const cutoff = "1717274303807"
 
 export const client = new Client({
     intents: [
