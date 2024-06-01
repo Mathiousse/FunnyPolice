@@ -5,14 +5,14 @@ import { userSocialStats, messagesScored, leaderboardMessages } from "./database
 import { EmbedBuilder } from '@discordjs/builders';
 
 export const reactionList = {
-    "😀": -2,
-    "😃": -1,
-    "😄": 0,
-    "😁": 1,
-    "🏳️‍⚧️": 2
+    "min2": -2,
+    "min1": -1,
+    "0_": 0,
+    "plus1": 1,
+    "plus2": 2
 }
 
-const cutoff = "1717178914308"
+const cutoff = "1717268721311"
 
 export const client = new Client({
     intents: [
@@ -60,7 +60,6 @@ client.once('ready', async () => {
 
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
     if (reaction.message.createdAt < cutoff) return console.log('Message too old')
-    console.log(reaction, "reaction")
     if (reaction.partial) {
         try {
             await reaction.fetch();
