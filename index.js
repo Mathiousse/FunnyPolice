@@ -26,13 +26,9 @@ export const client = new Client({
 });
 
 
-client.once('ready', readyClient => {
+client.once('ready', async () => {
     console.log(`Logged in as ${readyClient.user.tag}!`);
     import("./interactionCreate.js");
-});
-
-
-client.once('ready', async () => {
     const data = {
         name: 'leaderboard',
         description: 'Post the social credit leaderboard to a specific channel',
@@ -70,6 +66,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     }
     // Here you get added reactions
     if (reactionList[reaction.emoji.name]) {
+        console.log(`Reaction received: ${reaction.emoji.name} by ${user.tag}`);
         // If self react, add to shame counter
         if (reaction.message.author.id === user.id && reactionList[reaction.emoji.name] > 0) {
             const userStats = await userSocialStats.findOne({ where: { discordid: user.id, guildId: reaction.message.guild.id } });
