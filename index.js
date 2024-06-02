@@ -26,7 +26,7 @@ export const client = new Client({
 });
 
 
-client.once('ready', async () => {
+client.once('ready', async (readyClient) => {
     console.log(`Logged in as ${readyClient.user.tag}!`);
     import("./interactionCreate.js");
     const data = {
