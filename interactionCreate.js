@@ -1,6 +1,6 @@
 import { client } from "./index.js"
 import { EmbedBuilder } from "discord.js";
-import { leaderboardMessages, userSocialStats } from "./database.js";
+import { leaderboardMessages, userSocialStats, UserReactions } from "./database.js";
 
 client.on('interactionCreate', async interaction => {
     try {
@@ -19,43 +19,119 @@ client.on('interactionCreate', async interaction => {
                 }
             }
         }
-        let ranks = []
         const { commandName } = interaction;
-        if (commandName === 'leaderboard') {
-            const channel = interaction.options.getChannel('channel');
-            const guildId = interaction.guild.id;
-            const generalStats = await userSocialStats.findAll({ where: { guildId: guildId } })
-            generalStats.forEach(stat => {
-                const name = stat.dataValues.username
-                const socialCreditScore = stat.dataValues.socialCreditScore
-                ranks.push({ name: name, socialCreditScore: socialCreditScore })
-            });
-            function compareByCount(a, b) {
-                return a.socialCreditScore - b.socialCreditScore;
-            }
-            ranks.sort(compareByCount);
-            const embed = new EmbedBuilder()
-                .setTitle('Leaderboard')
-                .setDescription('This is the leaderboard');
-            console.log(ranks, "ranks")
-
-            embed.addFields({
-                name: 'User',
-                value: ranks.length > 0 ? ranks.map(rank => rank.name).join("\n") : 'No data',
-                inline: true
-            })
-            embed.addFields({
-                name: 'Social Credit Score',
-                value: ranks.length > 0 ? ranks.map(rank => rank.socialCreditScore?.toString()).join("\n") : 'No data',
-                inline: true
-            })
-
-            const leaderboardMessage = await channel.send({ embeds: [embed] });
-            await leaderboardMessages.upsert({ guildId: guildId, messageId: leaderboardMessage.id, channelId: channel.id });
-            await interaction.reply({ content: 'Posted the leaderboard!', ephemeral: true });
+        switch (commandName) {
+            case 'leaderboarding':
+                await leaderboardCommand(interaction);
+                break;
+            case 'stats':
+                // console.log(interaction.user.id, "interaction")
+                const messagesReacted = await UserReactions.findAll({ where: { userId: interaction.user.id } });
+                const reactedToMe = await UserReactions.findAll({ where: { reactedTo: interaction.user.id } });
+                const whoLovesMe = [], whoILove = []
+                messagesReacted.forEach(message => {
+                    // Check if the user is already in the array of objects
+                    if (!whoILove.some(whoLoves => whoLoves.userid === message.dataValues.reactedTo)) {
+                        whoILove.push({ userid: message.dataValues.reactedTo, count: 1 });
+                    } else {
+                        const user = whoILove.find(whoLoves => whoLoves.userid === message.dataValues.reactedTo);
+                        user.count++;
+                    }
+                })
+                reactedToMe.forEach(message => {
+                    // Check if the user is already in the array of objects
+                    if (!whoLovesMe.some(whoLoves => whoLoves.userid === message.dataValues.userId)) {
+                        whoLovesMe.push({ userid: message.dataValues.userId, count: 1 });
+                    } else {
+                        const user = whoLovesMe.find(whoLoves => whoLoves.userid === message.dataValues.userId);
+                        user.count++;
+                    }
+                })
+                console.log(whoLovesMe, "who loves me")
+                console.log(whoILove, "who i love")
+                // Sort the array of objects by the count
+                whoILove.sort((a, b) => b.count - a.count);
+                whoLovesMe.sort((a, b) => b.count - a.count);
+                const embed = new EmbedBuilder()
+                    .setTitle('Stats')
+                    .setDescription('Here are your stats :3');
+                embed.addFields({
+                    name: 'Reacted to',
+                    value: ("Total\n\n") + whoILove.map(person => "<@" + person.userid + ">").join("\n ") + "\n\n",
+                    inline: true
+                })
+                embed.addFields({
+                    name: "Amount of reactions",
+                    value: (messagesReacted.length.toString() + "\n\n") + whoILove.map(person => person.count).join("\n ") + "\n\n",
+                    inline: true
+                })
+                embed.addFields({
+                    name: '‎ ‎ ',
+                    value: '‎ ‎ ‎ ',
+                    inline: true,
+                })
+                embed.addFields({
+                    name: 'Reacted by',
+                    value: ("Total\n\n") + whoLovesMe.map(person => "<@" + person.userid + ">").join("\n ") + "\n\n",
+                    inline: true
+                })
+                embed.addFields({
+                    name: "Amount of reactions",
+                    value: (reactedToMe.length.toString() + "\n\n") + whoLovesMe.map(person => person.count).join("\n ") + "\n\n",
+                    inline: true
+                })
+                embed.addFields({
+                    name: '‎ ‎ ',
+                    value: '‎ ‎ ‎ ',
+                    inline: true,
+                })
+                await interaction.reply({ embeds: [embed], ephemeral: true });
+                break;
+            default:
+                await interaction.reply({ content: 'Unknown command!', ephemeral: true });
+                break;
         }
     } catch (error) {
         console.error(error);
         await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
     }
 });
+
+
+function compareByCount(a, b) {
+    return a.socialCreditScore - b.socialCreditScore;
+}
+
+
+const leaderboardCommand = async function (interaction) {
+    let ranks = []
+    const channel = interaction.options.getChannel('channel');
+    const guildId = interaction.guild.id;
+    const generalStats = await userSocialStats.findAll({ where: { guildId: guildId } })
+    generalStats.forEach(stat => {
+        const discordid = stat.dataValues.discordid
+        const socialCreditCount = stat.dataValues.socialCreditCount
+        ranks.push({ discordid: discordid, socialCreditCount: socialCreditCount })
+    });
+
+    ranks.sort(compareByCount);
+    const embed = new EmbedBuilder()
+        .setTitle('Leaderboard')
+        .setDescription('This is the leaderboard');
+
+    embed.addFields({
+        name: 'User',
+        value: ranks.length > 0 ? ranks.map(rank => "<@" + rank.discordid + ">").join("\n") : 'No data',
+        inline: true
+    })
+    embed.addFields({
+        name: 'Social Credit Score',
+        value: ranks.length > 0 ? ranks.map(rank => rank.socialCreditCount?.toString()).join("\n") : 'No data',
+        inline: true
+    })
+
+    const leaderboardMessage = await channel.send({ embeds: [embed] });
+    await leaderboardMessages.upsert({ guildId: guildId, messageId: leaderboardMessage.id, channelId: channel.id });
+    await interaction.reply({ content: 'Posted the leaderboard!', ephemeral: true });
+
+}

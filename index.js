@@ -1,9 +1,9 @@
 import 'dotenv/config'
 import pkg from 'discord.js';
 const { Client, Events, GatewayIntentBits, Partials } = pkg;
-import { userSocialStats, messagesScored, leaderboardMessages } from "./database.js";
+import { userSocialStats, messagesScored, leaderboardMessages, UserReactions } from "./database.js";
 import { EmbedBuilder } from '@discordjs/builders';
-
+import createCommands from './createCommands.js';
 export const reactionList = {
     "min2": -2,
     "min1": -1,
@@ -12,7 +12,7 @@ export const reactionList = {
     "plus2": 2
 }
 
-const cutoff = "1717274303807"
+const cutoff = "1717688057484"
 
 export const client = new Client({
     intents: [
@@ -29,28 +29,16 @@ export const client = new Client({
 client.once('ready', async (readyClient) => {
     console.log(`Logged in as ${readyClient.user.tag}!`);
     import("./interactionCreate.js");
-    const data = {
-        name: 'leaderboard',
-        description: 'Post the social credit leaderboard to a specific channel',
-        options: [{
-            name: 'channel',
-            type: 7,
-            description: 'The channel to post the leaderboard',
-            required: true,
-        }],
-    };
+    await createCommands(readyClient);
 
-    // await client.application.commands.create(data); // Global commands
-    const guildId = '1189230282398777374'; // only for the main discord
-    const guild = client.guilds.cache.get(guildId);
-    let command = await guild?.commands.create(data);
-    // console.log(`Registered command: ${command?.name}`);
     userSocialStats.sync();
     // userSocialStats.sync({ force: true });
     messagesScored.sync()
     // messagesScored.sync({ force: true })
     leaderboardMessages.sync()
     // leaderboardMessages.sync({ force: true })
+    UserReactions.sync()
+    // UserReactions.sync({ force: true })
 
 });
 
@@ -82,6 +70,15 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             }
             // return // add when shame time
         }
+        await UserReactions.create({
+            userId: user.id,
+            guildId: reaction.message.guild.id,
+            messageId: reaction.message.id,
+            reactedTo: reaction.message.author.id,
+            channelId: reaction.message.channel.id,
+            reactionType: reaction.emoji.name,
+        });
+
         const score = reactionList[reaction.emoji.name];
         const message = await messagesScored.findOne({ where: { messageId: reaction.message.id } });
         if (message) {

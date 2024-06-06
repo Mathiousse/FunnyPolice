@@ -21,18 +21,39 @@ export const userSocialStats = sequelize.define('userSocialStats', {
         defaultValue: 0,
         allowNull: false,
     },
-    messagesScored: {
-        type: Sequelize.STRING,
-    },
-    messagesScoreGiven: {
-        type: Sequelize.STRING,
-    },
     shameCount: {
         type: Sequelize.INTEGER,
         defaultValue: 0,
         allowNull: false,
     },
 });
+export const UserReactions = sequelize.define('userReactions', {
+    userId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+    },
+    guildId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+    },
+    messageId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+    },
+    channelId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+    },
+    reactedTo: {
+        type: Sequelize.STRING,
+        allowNull: false,
+    },
+    reactionType: {
+        type: Sequelize.STRING,
+        allowNull: false,
+    },
+});
+
 
 export const messagesScored = sequelize.define('messagesScored', {
     messageId: {
