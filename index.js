@@ -128,6 +128,18 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
             // return // add when shame time
         }
         const score = reactionList[reaction.emoji.name];
+        // retract the reaction from the database
+        await UserReactions.destroy({
+            where: {
+                userId: user.id,
+                guildId: reaction.message.guild.id,
+                messageId: reaction.message.id,
+                reactedTo: reaction.message.author.id,
+                channelId: reaction.message.channel.id,
+                reactionType: reaction.emoji.name,
+            }
+        });
+
         const message = await messagesScored.findOne({ where: { messageId: reaction.message.id } });
         if (message) {
             await message.decrement('score', { by: score });
