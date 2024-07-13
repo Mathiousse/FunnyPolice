@@ -89,6 +89,10 @@ client.on('interactionCreate', async interaction => {
 
             case 'panopticon':
                 // console.log(interaction.user.id, "interaction")
+                if (interaction.user.id !== "292985656685363201") {
+                    await interaction.reply({ content: 'You are not mathe tehee :3 :3 :3', ephemeral: true });
+                    break
+                }
                 const user = interaction.options.getUser('user');
                 messagesReacted = await UserReactions.findAll({ where: { userId: user.id } });
                 reactedToMe = await UserReactions.findAll({ where: { reactedTo: user.id } });
